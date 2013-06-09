@@ -1,0 +1,10 @@
+-- Implementing creation of new Snapshop/Tree(Node) from current file system structure
+---- FolderNode.java:72 Finish implementation of update()
+---- FileNode.java:29 Finish implementation of update()
+---- Remember to make a full merge since first backup in Tree to call update() on Snapshot/Backup
+------ Maybe will have to integrate Backup with Snapshot a little more because of previous field in Backup
+       being needed to track previous trees.
+-- Implement make backup action based on task above
+-- Implement restore backup
+-- Test, test, test!
+-- UI
