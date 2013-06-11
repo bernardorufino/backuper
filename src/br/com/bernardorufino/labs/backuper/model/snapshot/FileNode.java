@@ -6,6 +6,7 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 public final class FileNode extends Node implements Cloneable {
 
@@ -26,14 +27,18 @@ public final class FileNode extends Node implements Cloneable {
         return (FileNode) super.clone();
     }
 
+    public void restore(File clientLocation) throws IOException {
+        Utils.copy(getBackupFsNode(), clientLocation);
+    }
+
     public FileNode update(File file) throws IOException {
-        if (!file.isFile()) throw new IncompatibleNodeUpdateException();
-        //TODO: Check if files are parallel, maybe if relativePath is to the right of file.getAbsolutePath().
+        if (!isParallel(file)) throw new IncompatibleNodeUpdateException();
         DateTime fileDate = Utils.getDate(file);
         // If !(date < fileDate) = date >= fileDate, then no need to update
         if (!date.isBefore(fileDate)) return null;
         makeBackup(file);
-        return new FileNode(name, Status.Modify, fileDate, location); // It's orphan
+        // Returns orphan FileNode, needs to make it child of some FolderNode
+        return new FileNode(name, Status.Modify, fileDate, location);
     }
 
     private void makeBackup(File file) throws IOException {

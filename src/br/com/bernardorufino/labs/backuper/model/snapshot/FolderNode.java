@@ -11,8 +11,12 @@ import java.util.*;
 
 public final class FolderNode extends Node implements Cloneable {
 
-    public static FolderNode getDummy() {
-        return new FolderNode("dummy", Status.Existent, DateTime.now(), null);
+    public static FolderNode getDummy() { return new FolderNode(null, Status.Existent, DateTime.now(), null); }
+
+    public static FolderNode createFromFileSystem(File folder, File location) throws IOException {
+        FolderNode node = (FolderNode) Node.create(folder, Status.Create, location);
+        node.update(folder);
+        return node;
     }
 
     // Using Map for O(n) merge instead of O(n^2) in merge()
@@ -26,6 +30,7 @@ public final class FolderNode extends Node implements Cloneable {
 
     /* package private */ void addChild(Node child) {
         children.put(child.name, child);
+        if (child.date.isAfter(date)) date = child.date;
         child.setParent(this);
     }
 
@@ -70,30 +75,33 @@ public final class FolderNode extends Node implements Cloneable {
     }
 
     public FolderNode update(File folder) throws IOException {
-        if (!folder.isDirectory()) throw new IncompatibleNodeUpdateException();
-        FolderNode newFolderNode = new FolderNode(name, Status.Modify, date, location);
-        Map<String, Node> olds = new LinkedHashMap<>(children);
-
+        if (!isParallel(folder)) throw new IncompatibleNodeUpdateException();
+        FolderNode newFolderNode = getModifiedScaffold();
+        Map<String, Node> currentChildren = new LinkedHashMap<>(children);
+        //noinspection ConstantConditions IntelliJ
         for (File fsNode : folder.listFiles()) {
-            Node old = olds.get(fsNode.getName());
-            if (old == null) { // New file OR NODE,
-                //TODO: FIX! Create new folders, here only support files
-                FileNode newFileNode = new FileNode(fsNode.getName(), Status.Modify, getDate(fsNode), location);
-                newFolderNode.addChild(newFileNode);
-                // continue; ?
-            } else if (getDate(fsNode).isAfter(old.date)) { // Modified file
-                //TODO: CHeck if support modfified Folders
-                Node updatedFileNode = old.update(fsNode);
-                newFolderNode.addChild(updatedFileNode);
-            }
-            // Remove old from olds
+            Node currentChild = currentChildren.remove(fsNode.getName());
+            if (currentChild == null) { // New fsNode
+                Node newChildNode = Node.create(fsNode, Status.Modify, location);
+                newFolderNode.addChild(newChildNode);
+            } else if (getDate(fsNode).isAfter(currentChild.date)) { // Modified fsNode
+                Node modifiedChildNode = currentChild.update(fsNode);
+                newFolderNode.addChild(modifiedChildNode);
+            } // else don't add in newFolderNode because it's already here and up to date,
+              // thus don't need to be in the next (incremental) folder
         }
-        // Iterate through olds (which contains the remaining children of current node),
-        // and add nodes marked for deletion, (maybe recursive deletion for folders?)
+        // Remaining nodes in current tree, if they are still in currentChildren, it means they
+        // aren't in the file system, thus need to be marked for deletion
+        for (Node node : currentChildren.values()) {
+            Node deletedNode = node.markForDeletion();
+            newFolderNode.addChild(deletedNode);
+        }
+        if (newFolderNode.getChildren().isEmpty()) newFolderNode = null;
+        return newFolderNode;
+    }
 
-        // Check if there was modifications (maybe create a boolean), if there wasn't simple return null
-        // otherwise return newFolderNode;
-        return null;
+    public FolderNode getModifiedScaffold() {
+        return new FolderNode(name, Status.Modify, date, location);
     }
 
     public FolderNode clone() {
@@ -103,6 +111,14 @@ public final class FolderNode extends Node implements Cloneable {
             addChild(node.clone());
         }
         return clone;
+    }
+
+    public void restore(File clientLocation) throws IOException {
+        // Have to copy the empty folder first
+        Utils.copy(getBackupFsNode(), clientLocation);
+        for (Node node : children.values()) {
+            node.restore(clientLocation);
+        }
     }
 
 }

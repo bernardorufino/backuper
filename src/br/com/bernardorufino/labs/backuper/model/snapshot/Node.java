@@ -4,15 +4,19 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.regex.Pattern;
+
+import static br.com.bernardorufino.labs.backuper.utils.Utils.*;
 
 public abstract class Node {
+
+    public static final String SEPARATOR = File.separator;
 
     public static class IncompatibleNodeMergeException extends RuntimeException { /* Empty */ }
     public static class IncompatibleNodeUpdateException extends RuntimeException { /* Empty */ }
 
-
-    public static enum Type { File, Folder;}
-    public static enum Status { Create, Delete, Modify, Existent;}
+    public static enum Type { File, Folder }
+    public static enum Status { Create, Delete, Modify, Existent }
 
     public static Node fromList(String list, File location) {
         return NodeParser.fromList(list, location);
@@ -24,6 +28,12 @@ public abstract class Node {
             case Folder: return new FolderNode(name, status, date, location);
         }
         return null;
+    }
+
+
+    public static Node create(File fsNode, Status status, File location) throws IOException {
+        //TODO: Handle folder recursive creation of tree
+        return create(fsNode.isFile() ? Type.File : Type.Folder, fsNode.getName(), status, getDate(fsNode), location);
     }
 
     protected final String name;
@@ -56,7 +66,8 @@ public abstract class Node {
 
     public void setParent(FolderNode parent) {
         this.parent = parent;
-        relativePath = parent.relativePath + Snapshot.SEPARATOR + name; // Assuming top down creation...
+        // Assuming top down creation
+        relativePath = parent.relativePath + SEPARATOR + name;
     }
 
     public String getRelativePath() {
@@ -68,6 +79,10 @@ public abstract class Node {
         return location.getPath() + getRelativePath();
     }
 
+    public File getBackupFsNode() {
+        // File is already immutable, don't care about caching the file in the object
+        return new File(getBackupPath());
+    }
 
     public String toString() {
         String property;
@@ -85,6 +100,15 @@ public abstract class Node {
 
     public abstract void merge(Node node);
 
+    public boolean isParallel(File file) {
+        return getType() == fsNodeType(file)
+               && Pattern.compile(Pattern.quote(getRelativePath()) + "$").matcher(file.getAbsolutePath()).find();
+    }
+
+    protected Type fsNodeType(File fsNode) {
+        return fsNode.isFile() ? Type.File : Type.Folder;
+    }
+
     // Caution, it's only advisable to call update on fully merged trees
     public abstract Node update(File fileSystemNode) throws IOException;
 
@@ -94,9 +118,16 @@ public abstract class Node {
         return node != null && getType() == node.getType() && relativePath.equals(node.relativePath);
     }
 
-    protected Node clone() {
-        // Not throwing exception because it's known beforehand that
-        // all subclasses implement Cloneable
+    public Node markForDeletion() {
+        Node clone = clone();
+        clone.status = Status.Delete;
+        return clone;
+    }
+
+    // Not throwing exception because it's known beforehand that
+    // all subclasses implement Cloneable
+    @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+    public Node clone() {
         try {
             // All fields are immutable, don't need cloning them
             return (Node) super.clone();
@@ -104,5 +135,8 @@ public abstract class Node {
             throw new AssertionError();
         }
     }
+
+    public abstract void restore(File clientLocation) throws IOException;
+
 
 }
