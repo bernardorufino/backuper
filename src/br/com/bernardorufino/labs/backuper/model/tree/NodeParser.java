@@ -1,4 +1,4 @@
-package br.com.bernardorufino.labs.backuper.model.snapshot;
+package br.com.bernardorufino.labs.backuper.model.tree;
 
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;

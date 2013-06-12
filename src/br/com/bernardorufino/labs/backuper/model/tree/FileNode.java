@@ -1,4 +1,4 @@
-package br.com.bernardorufino.labs.backuper.model.snapshot;
+package br.com.bernardorufino.labs.backuper.model.tree;
 
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
@@ -6,7 +6,6 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 public final class FileNode extends Node implements Cloneable {
 

@@ -1,9 +1,7 @@
 package br.com.bernardorufino.labs.backuper.model.backup;
 
-import br.com.bernardorufino.labs.backuper.model.snapshot.Node;
-import br.com.bernardorufino.labs.backuper.utils.Utils;
+import br.com.bernardorufino.labs.backuper.model.tree.Node;
 
-import java.io.File;
 import java.io.IOException;
 
 public class IncrementalBackup extends Backup {

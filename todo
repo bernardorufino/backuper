@@ -4,9 +4,10 @@
 !--- Remember to make a full merge since first backup in Tree to call update() on Snapshot/Backup
 !----- Maybe will have to integrate Backup with Snapshot a little more because of previous field in Backup
        being needed to track previous trees.
--- Implement make backup action based on task above
----- Create new backup folder copying news and modified files and creating modificationsTree file (see Backup.java:17)
--- Implement restore backup
+!- Implement make backup action based on task above
+!--- Create new backup folder copying news and modified files and creating modificationsTree file (see Backup.java:17)
+!- Implement restore backup
 -- Test, test, test!
+-- Handle Backups with backup manager
 -- close File objects!
 -- UI
