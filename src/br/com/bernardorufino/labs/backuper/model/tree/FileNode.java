@@ -9,8 +9,16 @@ import java.io.IOException;
 
 public final class FileNode extends Node implements Cloneable {
 
-    /* package private */ FileNode(String name, Status status, DateTime date, File location) {
+    /* package private */
+    public FileNode(String name, Status status, DateTime date, File location) {
         super(name, status, date, location);
+    }
+
+    public FileNode(File file, File location, FolderNode parent) throws IOException {
+        super(file.getName(), Status.Create, Utils.getDate(file), location);
+        if (!isParallel(file)) throw new IncompatibleNodeException();
+        if (parent != null) setParent(parent);
+        Utils.copy(file, parent.getBackupPath());
     }
 
     public String toList(int level) {
@@ -30,18 +38,14 @@ public final class FileNode extends Node implements Cloneable {
         Utils.copy(getBackupFsNode(), clientLocation);
     }
 
-    public FileNode update(File file) throws IOException {
-        if (!isParallel(file)) throw new IncompatibleNodeUpdateException();
+    public FileNode track(File file) throws IOException {
+        if (!isParallel(file)) throw new IncompatibleNodeException();
         DateTime fileDate = Utils.getDate(file);
         // If !(date < fileDate) = date >= fileDate, then no need to update
         if (!date.isBefore(fileDate)) return null;
-        makeBackup(file);
+        Utils.copy(file, getBackupPath());
         // Returns orphan FileNode, needs to make it child of some FolderNode
         return new FileNode(name, Status.Modify, fileDate, location);
-    }
-
-    private void makeBackup(File file) throws IOException {
-        Utils.copy(file, getBackupPath());
     }
 
     public void merge(Node node) {

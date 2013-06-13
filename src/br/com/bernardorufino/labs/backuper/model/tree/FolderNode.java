@@ -13,29 +13,50 @@ public final class FolderNode extends Node implements Cloneable {
 
     public static FolderNode getDummy() { return new FolderNode(null, Status.Existent, DateTime.now(), null); }
 
-    public static FolderNode createFromFileSystem(File folder, File location) throws IOException {
-        FolderNode node = (FolderNode) Node.create(folder, Status.Create, location);
-        node.update(folder);
-        return node;
-    }
-
     // Using Map for O(n) merge instead of O(n^2) in merge()
     // LinkedHashSet for preserving order in children, although children
     // don't need to be ordered in a folder, using for fast equality checking
     private Map<String, Node> children = new LinkedHashMap<>();
 
-    /* package private */ FolderNode(String name, Status status, DateTime date, File location) {
+    /* package private */
+    public FolderNode(String name, Status status, DateTime date, File location) {
         super(name, status, date, location);
     }
 
-    /* package private */ void addChild(Node child) {
+    // In order to create from the file system we need parent before-hand
+    public FolderNode(File folder, File location, FolderNode parent) throws IOException {
+        super(folder.getName(), Status.Create, Utils.getDate(folder), location);
+        if (!isParallel(folder)) throw new IncompatibleNodeException();
+        if (parent != null) setParent(parent);
+        Utils.createFolder(getBackupPath());
+        //noinspection ConstantConditions IntelliJ
+        for (File fsNode : folder.listFiles()) {
+            Node child = Node.createFromFileSystem(fsNode, location, this);
+            addChild(child);
+        }
+    }
+
+    // To be called only when this folder is already attached to it's parent
+    // and when it's already filled up with it's children
+    // will recursively call it's children backup() method as well
+    public void backup(File folder) throws IOException {
+        Utils.createFolder(getBackupPath());
+
+    }
+
+    /* package private */
+    public void addChild(Node child) {
         children.put(child.name, child);
         if (child.date.isAfter(date)) date = child.date;
         child.setParent(this);
     }
 
-    public Map<String, Node> getChildren() {
+    public Map<String, Node> getChildrenMap() {
         return children;
+    }
+
+    public List<Node> getChildren() {
+        return new ArrayList<>(children.values());
     }
 
     public void removeChild(String name){
@@ -59,7 +80,7 @@ public final class FolderNode extends Node implements Cloneable {
     public void merge(Node node) {
         if (!parallel(node)) throw new IncompatibleNodeMergeException();
         FolderNode recentFolder = (FolderNode) node;
-        Map<String, Node> recents = new HashMap<>(recentFolder.getChildren());
+        Map<String, Node> recents = new HashMap<>(recentFolder.children);
         for (Node old : children.values()) {
             // If recent is nonexistent preserve old one
             if (!recents.containsKey(old.name)) continue;
@@ -74,18 +95,18 @@ public final class FolderNode extends Node implements Cloneable {
         }
     }
 
-    public FolderNode update(File folder) throws IOException {
-        if (!isParallel(folder)) throw new IncompatibleNodeUpdateException();
+    public FolderNode track(File folder) throws IOException {
+        if (!isParallel(folder)) throw new IncompatibleNodeException();
         FolderNode newFolderNode = getModifiedScaffold();
         Map<String, Node> currentChildren = new LinkedHashMap<>(children);
         //noinspection ConstantConditions IntelliJ
         for (File fsNode : folder.listFiles()) {
             Node currentChild = currentChildren.remove(fsNode.getName());
             if (currentChild == null) { // New fsNode
-                Node newChildNode = Node.create(fsNode, Status.Modify, location);
+                Node newChildNode = Node.createFromFileSystem(fsNode, location, newFolderNode);
                 newFolderNode.addChild(newChildNode);
             } else if (getDate(fsNode).isAfter(currentChild.date)) { // Modified fsNode
-                Node modifiedChildNode = currentChild.update(fsNode);
+                Node modifiedChildNode = currentChild.track(fsNode);
                 newFolderNode.addChild(modifiedChildNode);
             } // else don't add in newFolderNode because it's already here and up to date,
               // thus don't need to be in the next (incremental) folder
@@ -96,7 +117,7 @@ public final class FolderNode extends Node implements Cloneable {
             Node deletedNode = node.markForDeletion();
             newFolderNode.addChild(deletedNode);
         }
-        if (newFolderNode.getChildren().isEmpty()) newFolderNode = null;
+        if (newFolderNode.children.isEmpty()) newFolderNode = null;
         return newFolderNode;
     }
 

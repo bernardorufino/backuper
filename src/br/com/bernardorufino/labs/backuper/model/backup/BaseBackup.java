@@ -11,8 +11,12 @@ public class BaseBackup extends Backup {
 
     protected BaseBackup(File clientFolder, File backupsFolder) throws IOException {
         super(null, clientFolder, backupsFolder);
-        this.modificationsTree = FolderNode.createFromFileSystem(clientFolder, backupFolder);
+        this.modificationsTree = Node.createFromFileSystem(clientFolder, backupFolder);
         writeModificationsFile();
+    }
+
+    protected BaseBackup(String id, Node modificationsTree, File backupFolder, File clientFolder, File backupsFolder) {
+        super(id, null, modificationsTree, backupFolder, clientFolder, backupsFolder);
     }
 
     public Node getSnapshot() {

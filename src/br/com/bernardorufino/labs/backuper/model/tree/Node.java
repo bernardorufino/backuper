@@ -13,10 +13,14 @@ public abstract class Node {
     public static final String SEPARATOR = File.separator;
 
     public static class IncompatibleNodeMergeException extends RuntimeException { /* Empty */ }
-    public static class IncompatibleNodeUpdateException extends RuntimeException { /* Empty */ }
+
+    public static class IncompatibleNodeException extends RuntimeException { /* Empty */ }
+
 
     public static enum Type { File, Folder }
+
     public static enum Status { Create, Delete, Modify, Existent }
+
 
     public static Node fromList(String list, File location) {
         return NodeParser.fromList(list, location);
@@ -30,13 +34,20 @@ public abstract class Node {
         return null;
     }
 
+    public static Node createFromFileSystem(File fsNode, File location, FolderNode parent) throws IOException {
+        if (fsNode.isFile()) {
+            return new FileNode(fsNode, location, parent);
+        } else {
+            return new FolderNode(fsNode, location, parent);
+        }
+    }
 
-    public static Node create(File fsNode, Status status, File location) throws IOException {
-        //TODO: Handle folder recursive creation of tree
-        return create(fsNode.isFile() ? Type.File : Type.Folder, fsNode.getName(), status, getDate(fsNode), location);
+    public static Node createFromFileSystem(File fsNode, File location) throws IOException {
+        return createFromFileSystem(fsNode, location, null);
     }
 
     protected final String name;
+
     protected Status status;
     protected DateTime date;
     protected String relativePath;
@@ -49,7 +60,7 @@ public abstract class Node {
         this.name = name;
         this.status = status;
         this.date = date;
-        this.relativePath = "";
+        this.relativePath = name;
         this.location = location;
     }
 
@@ -62,6 +73,7 @@ public abstract class Node {
     public abstract Type getType();
 
     public boolean isFolder() { return getType() == Type.Folder; }
+
     public boolean isFile() { return getType() == Type.File; }
 
     public void setParent(FolderNode parent) {
@@ -75,8 +87,7 @@ public abstract class Node {
     }
 
     public String getBackupPath() {
-        // relativePath already starts with SEPARATOR
-        return location.getPath() + getRelativePath();
+        return location.getPath() + SEPARATOR + relativePath;
     }
 
     public File getBackupFsNode() {
@@ -110,7 +121,7 @@ public abstract class Node {
     }
 
     // Caution, it's only advisable to call update on fully merged trees
-    public abstract Node update(File fileSystemNode) throws IOException;
+    public abstract Node track(File fileSystemNode) throws IOException;
 
     public boolean parallel(Node node) {
         //TODO: Remove line below, just for Debugging purpose
@@ -137,6 +148,5 @@ public abstract class Node {
     }
 
     public abstract void restore(File clientLocation) throws IOException;
-
 
 }

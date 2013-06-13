@@ -18,31 +18,7 @@ public class NodeParser {
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.mediumDateTime();
 
     public static void main(String[] args) {
-        FolderNode root = new FolderNode("Main", Node.Status.Existent, DateTime.now(), null);
-        for (String name : new String[] { "FileName.java", "FolderNode.java", "Node.java" }) {
-            root.addChild(new FileNode(name, Node.Status.Existent, DateTime.now(), null));
-        }
-        FolderNode p = new FolderNode("Subfolder", Node.Status.Existent, DateTime.now(), null);
-        root.addChild(p);
-        for (String name : new String[] { "BackupsView.java", "Snapshot.java" }) {
-            p.addChild(new FileNode(name, Node.Status.Existent, DateTime.now(), null));
-        }
-        FolderNode q = new FolderNode("Subsubfolder", Node.Status.Existent, DateTime.now(), null);
-        p.addChild(q);
-        for (String name : new String[] { "Init.java", "Gleup.class" }) {
-            q.addChild(new FileNode(name, Node.Status.Existent, DateTime.now(), null));
-        }
-        root.addChild(new FolderNode("EmptyFolder", Node.Status.Create, DateTime.now(), null));
-        root.addChild(new FileNode("FooFile.kiu", Node.Status.Create, DateTime.now(), null));
 
-        String list = root.toList();
-        System.out.println(list);
-        root = (FolderNode) Node.fromList(list, null);
-        String n = ((FolderNode) ((FolderNode) root.getChildren().get(3)).getChildren().get(2)).getChildren().get(1).getRelativePath();
-        System.out.println(n);
-        String other = root.toList();
-        System.out.println(other);
-        System.out.println(list.equals(other));
     }
 
     private static final String DELIMITER_REPLACEMENT = "_";
