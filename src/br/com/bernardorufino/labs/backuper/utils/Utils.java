@@ -1,8 +1,12 @@
 package br.com.bernardorufino.labs.backuper.utils;
 
+import br.com.bernardorufino.labs.backuper.model.tree.Node;
+import br.com.bernardorufino.labs.backuper.model.tree.NodeParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeComparator;
+import org.joda.time.DateTimeFieldType;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 public class Utils {
+
+    public static DateTimeComparator dateComparator = DateTimeComparator.getInstance(DateTimeFieldType.secondOfMinute());
 
     public static class FileDate {
         public DateTime createdAt, modifiedAt;
@@ -38,12 +44,18 @@ public class Utils {
         return date.createdAt.isAfter(date.modifiedAt) ? date.createdAt : date.modifiedAt;
     }
 
-    public static File copy(File file, String location) throws IOException {
-        return copy(file, new File(location));
+    public static File copyIntoFolder(File file, String location) throws IOException {
+        return copyIntoFolder(file, new File(location));
     }
 
-    public static File copy(File file, File location) throws IOException {
-        return Files.copy(file.toPath(), location.toPath().resolve(file.getName()), REPLACE_EXISTING).toFile();
+    public static File copyIntoFolder(File file, File location) throws IOException {
+        return copy(file, location.toPath().resolve(file.getName()).toString());
+    }
+
+    public static File copy(File file, String location) throws IOException {
+        File target = new File(location);
+        target.getParentFile().mkdirs();
+        return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING).toFile();
     }
 
     private static class Purger extends SimpleFileVisitor<Path> {
@@ -98,7 +110,22 @@ public class Utils {
     }
 
     public static File createFolder(String path) throws IOException {
-        return Files.createDirectory(new File(path).toPath()).toFile();
+        File folder = new File(path);
+        folder.mkdirs();
+        return folder;
+    }
+
+    public static String joinPaths(String... paths) {
+        StringBuilder joint = new StringBuilder();
+        for (String path : paths) {
+            joint.append(Node.SEPARATOR);
+            joint.append(StringUtils.strip(path, Node.SEPARATOR));
+        }
+        return StringUtils.strip(joint.toString(), Node.SEPARATOR);
+    }
+
+    public static boolean isAfter(DateTime a, DateTime b) {
+        return dateComparator.compare(a, b) > 0;
     }
 
 }

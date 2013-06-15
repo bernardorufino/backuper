@@ -18,7 +18,7 @@ public final class FileNode extends Node implements Cloneable {
         super(file.getName(), Status.Create, Utils.getDate(file), location);
         if (!isParallel(file)) throw new IncompatibleNodeException();
         if (parent != null) setParent(parent);
-        Utils.copy(file, parent.getBackupPath());
+        Utils.copyIntoFolder(file, parent.getBackupPath());
     }
 
     public String toList(int level) {
@@ -35,15 +35,15 @@ public final class FileNode extends Node implements Cloneable {
     }
 
     public void restore(File clientLocation) throws IOException {
-        Utils.copy(getBackupFsNode(), clientLocation);
+        Utils.copyIntoFolder(getBackupFsNode(), clientLocation);
     }
 
-    public FileNode track(File file) throws IOException {
+    public FileNode track(File file, File newLocation) throws IOException {
         if (!isParallel(file)) throw new IncompatibleNodeException();
         DateTime fileDate = Utils.getDate(file);
         // If !(date < fileDate) = date >= fileDate, then no need to update
         if (!date.isBefore(fileDate)) return null;
-        Utils.copy(file, getBackupPath());
+        Utils.copy(file, getFullPath(newLocation));
         // Returns orphan FileNode, needs to make it child of some FolderNode
         return new FileNode(name, Status.Modify, fileDate, location);
     }

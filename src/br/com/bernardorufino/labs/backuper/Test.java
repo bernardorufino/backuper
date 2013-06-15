@@ -4,6 +4,7 @@ import br.com.bernardorufino.labs.backuper.model.backup.BackupsManager;
 import br.com.bernardorufino.labs.backuper.model.tree.FileNode;
 import br.com.bernardorufino.labs.backuper.model.tree.FolderNode;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
+import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.joda.time.DateTime;
 
 import java.io.File;

@@ -1,5 +1,7 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
+import br.com.bernardorufino.labs.backuper.utils.Utils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import java.io.File;
@@ -56,11 +58,13 @@ public abstract class Node {
     protected File location;
     protected FolderNode parent;
 
+    //TODO: Check wheter it's not best to put a parent parameter here =)
+
     protected Node(String name, Status status, DateTime date, File location) {
         this.name = name;
         this.status = status;
         this.date = date;
-        this.relativePath = name;
+        this.relativePath = (name != null) ? name : null;
         this.location = location;
     }
 
@@ -79,7 +83,7 @@ public abstract class Node {
     public void setParent(FolderNode parent) {
         this.parent = parent;
         // Assuming top down creation
-        relativePath = parent.relativePath + SEPARATOR + name;
+        relativePath = (parent == null) ? name : Utils.joinPaths(parent.relativePath, name);
     }
 
     public String getRelativePath() {
@@ -87,7 +91,11 @@ public abstract class Node {
     }
 
     public String getBackupPath() {
-        return location.getPath() + SEPARATOR + relativePath;
+        return getFullPath(location);
+    }
+
+    protected String getFullPath(File backupLocation) {
+        return Utils.joinPaths(backupLocation.getPath(), relativePath);
     }
 
     public File getBackupFsNode() {
@@ -121,7 +129,7 @@ public abstract class Node {
     }
 
     // Caution, it's only advisable to call update on fully merged trees
-    public abstract Node track(File fileSystemNode) throws IOException;
+    public abstract Node track(File fileSystemNode, File newLocation) throws IOException;
 
     public boolean parallel(Node node) {
         //TODO: Remove line below, just for Debugging purpose

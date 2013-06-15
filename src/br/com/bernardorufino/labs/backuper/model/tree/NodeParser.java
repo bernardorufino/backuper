@@ -35,7 +35,7 @@ public class NodeParser {
     public static Node fromList(String list, File location) {
         String[] lines = list.split("\n");
         Stack<FolderNode> folders = new Stack<>();
-        FolderNode root = FolderNode.getDummy(), folder = root;
+        FolderNode root = FolderNode.getDummyRoot(), folder = root;
         folders.push(root);
         int level = 0;
         for (String line : lines) {
@@ -54,7 +54,9 @@ public class NodeParser {
             level = data.level;
             if (data.node.isFolder()) folder = (FolderNode) data.node;
         }
-        return root.getChildren().get(0);
+        Node node = root.getChildren().get(0);
+        node.setParent(null);
+        return node;
     }
 
     private static class LineData {
@@ -72,7 +74,7 @@ public class NodeParser {
         // use the remaining string to create a node.
         LineData result = new LineData();
         Matcher m = Pattern.compile("^((?:" + INDENTATION + ")*)(.+)$").matcher(line);
-        m.lookingAt();
+        if (!m.lookingAt()) return null;
         // Set the depth level by the indentation
         result.level = m.group(1).length() / INDENTATION.length();
         Scanner scan = new Scanner(m.group(2)).useDelimiter(DELIMITER);

@@ -11,7 +11,12 @@ import java.util.*;
 
 public final class FolderNode extends Node implements Cloneable {
 
-    public static FolderNode getDummy() { return new FolderNode(null, Status.Existent, DateTime.now(), null); }
+
+    public static FolderNode getDummyRoot() {
+        FolderNode dummy = new FolderNode(null, Status.Existent, DateTime.now(), null);
+        dummy.relativePath = "";
+        return dummy;
+    }
 
     // Using Map for O(n) merge instead of O(n^2) in merge()
     // LinkedHashSet for preserving order in children, although children
@@ -95,19 +100,22 @@ public final class FolderNode extends Node implements Cloneable {
         }
     }
 
-    public FolderNode track(File folder) throws IOException {
+    public FolderNode track(File folder, File newLocation) throws IOException {
+//        System.out.println("track(" + folder.getName() + ")");
         if (!isParallel(folder)) throw new IncompatibleNodeException();
-        FolderNode newFolderNode = getModifiedScaffold();
+        FolderNode newFolderNode = getModifiedScaffold(newLocation);
         Map<String, Node> currentChildren = new LinkedHashMap<>(children);
         //noinspection ConstantConditions IntelliJ
         for (File fsNode : folder.listFiles()) {
             Node currentChild = currentChildren.remove(fsNode.getName());
             if (currentChild == null) { // New fsNode
-                Node newChildNode = Node.createFromFileSystem(fsNode, location, newFolderNode);
+                Node newChildNode = Node.createFromFileSystem(fsNode, newLocation, newFolderNode);
                 newFolderNode.addChild(newChildNode);
-            } else if (getDate(fsNode).isAfter(currentChild.date)) { // Modified fsNode
-                Node modifiedChildNode = currentChild.track(fsNode);
-                newFolderNode.addChild(modifiedChildNode);
+            } else if (Utils.isAfter(getDate(fsNode), currentChild.date) || currentChild.isFolder()) { // Modified fsNode or folder
+                Node modifiedChildNode = currentChild.track(fsNode, newLocation);
+                if (modifiedChildNode != null) {
+                    newFolderNode.addChild(modifiedChildNode);
+                }
             } // else don't add in newFolderNode because it's already here and up to date,
               // thus don't need to be in the next (incremental) folder
         }
@@ -121,8 +129,11 @@ public final class FolderNode extends Node implements Cloneable {
         return newFolderNode;
     }
 
-    public FolderNode getModifiedScaffold() {
-        return new FolderNode(name, Status.Modify, date, location);
+    // Check wheter cloning it's not best
+    public FolderNode getModifiedScaffold(File newLocation) {
+        FolderNode node = new FolderNode(name, Status.Modify, date, newLocation);
+        node.setParent(parent);
+        return node;
     }
 
     public FolderNode clone() {
@@ -136,7 +147,7 @@ public final class FolderNode extends Node implements Cloneable {
 
     public void restore(File clientLocation) throws IOException {
         // Have to copy the empty folder first
-        Utils.copy(getBackupFsNode(), clientLocation);
+        Utils.copyIntoFolder(getBackupFsNode(), clientLocation);
         for (Node node : children.values()) {
             node.restore(clientLocation);
         }

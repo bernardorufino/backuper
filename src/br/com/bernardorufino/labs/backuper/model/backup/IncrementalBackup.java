@@ -9,7 +9,8 @@ public class IncrementalBackup extends Backup {
 
     protected IncrementalBackup(Backup previous) throws IOException {
         super(previous, previous.clientFolder, previous.backupsFolder);
-        this.modificationsTree = previous.modificationsTree.track(clientFolder);
+        // Use snapshot!
+        this.modificationsTree = previous.getSnapshot().track(clientFolder, backupFolder);
         writeModificationsFile();
     }
 

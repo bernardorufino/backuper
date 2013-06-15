@@ -7,10 +7,12 @@
 !- Implement make backup action based on task above
 !--- Create new backup folder copying news and modified files and creating modificationsTree file (see Backup.java:17)
 !- Implement restore backup
--- Handle creation of backup files
----- Have to copy files on update()
----- Have to copy files on creation (strategy not defined)
----- Recursion, tree walk??
+!-- Handle creation of backup files
+!---- Have to copy files on update()
+!---- Have to copy files on creation (strategy not defined)
+!---- Recursion, tree walk??
+-- Create noModificationTree
+-- Extract Settings!
 -- DATE OF SNAPSHOTS, NOT FILES!
 -- Test, test, test!
 -- Handle Backups with backup manager

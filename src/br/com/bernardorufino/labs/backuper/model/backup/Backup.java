@@ -42,14 +42,15 @@ public abstract class Backup {
     }
 
     protected String toBuildingString() {
-        if (modificationsTree == null) throw new IllegalStateException();
         StringBuilder string = new StringBuilder();
         if (previous == null) {
-            string.append(BackupsManager.BASE_BACKUP_HEAD).append("\n");
+            string.append(BackupsManager.BASE_BACKUP_HEAD);
         } else {
-            string.append(id).append("\n");
+            string.append(previous.id);
         }
-        string.append(modificationsTree.toList());
+        if (modificationsTree != null) {
+            string.append("\n").append(modificationsTree.toList());
+        }
         return string.toString();
     }
 
