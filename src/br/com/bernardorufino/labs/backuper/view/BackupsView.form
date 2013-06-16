@@ -1,203 +1,120 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="br.com.bernardorufino.labs.backuper.view.BackupsView">
-  <grid id="27dc6" binding="main" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-    <margin top="0" left="0" bottom="0" right="0"/>
+  <grid id="27dc6" binding="main" layout-manager="GridLayoutManager" row-count="4" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+    <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="350" height="350"/>
+      <xy x="20" y="20" width="373" height="350"/>
     </constraints>
     <properties>
       <minimumSize width="350" height="350"/>
       <preferredSize width="350" height="350"/>
     </properties>
-    <border type="none"/>
+    <border type="none">
+      <size top="10" left="10" bottom="10" right="10"/>
+    </border>
     <children>
-      <tabbedpane id="1eaa8">
+      <component id="4cc60" class="javax.swing.JLabel">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="200" height="200"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Destino"/>
+        </properties>
+      </component>
+      <component id="b1636" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Origem"/>
+        </properties>
+      </component>
+      <component id="9571d" class="javax.swing.JTextField" binding="clientFolderField">
+        <constraints>
+          <grid row="1" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
-        <properties/>
-        <border type="none"/>
+        <properties>
+          <editable value="false"/>
+          <text value=""/>
+        </properties>
+      </component>
+      <component id="f16e2" class="javax.swing.JButton" binding="chooseDestination">
+        <constraints>
+          <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Selecionar"/>
+        </properties>
+      </component>
+      <component id="cead6" class="javax.swing.JButton" binding="chooseOrigin">
+        <constraints>
+          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Selecionar"/>
+        </properties>
+      </component>
+      <scrollpane id="b9cfe">
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="5" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <background color="-1"/>
+        </properties>
+        <border type="none">
+          <size top="5" left="5" bottom="5" right="5"/>
+          <color color="-6710887"/>
+        </border>
         <children>
-          <grid id="7f0a2" layout-manager="GridLayoutManager" row-count="4" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="10" left="10" bottom="10" right="10"/>
-            <constraints>
-              <tabbedpane title="Fazer Backup"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="21c94" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Destino"/>
-                </properties>
-              </component>
-              <component id="d0eba" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Origem"/>
-                </properties>
-              </component>
-              <component id="6a9c2" class="javax.swing.JTextField" binding="clientFolderField">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="4" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="D:\Backuper\Client"/>
-                </properties>
-              </component>
-              <component id="9ebe" class="javax.swing.JButton" binding="chooseDestination">
-                <constraints>
-                  <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Selecionar"/>
-                </properties>
-              </component>
-              <component id="4368e" class="javax.swing.JButton" binding="chooseOrigin">
-                <constraints>
-                  <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Selecionar"/>
-                </properties>
-              </component>
-              <scrollpane id="36977">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="6" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="line">
-                  <size top="5" left="0" bottom="5" right="0"/>
-                  <color color="-6710887"/>
-                </border>
-                <children>
-                  <component id="3928f" class="javax.swing.JTable" binding="history">
-                    <constraints/>
-                    <properties/>
-                  </component>
-                </children>
-              </scrollpane>
-              <component id="32411" class="javax.swing.JProgressBar" binding="backupProgress">
-                <constraints>
-                  <grid row="3" column="4" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="6e4f" class="javax.swing.JTextField" binding="backupsFolderField">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="4" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="D:\Backuper\Backup"/>
-                </properties>
-              </component>
-              <component id="8fcf3" class="javax.swing.JButton" binding="makeBackup">
-                <constraints>
-                  <grid row="3" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <borderPainted value="true"/>
-                  <contentAreaFilled value="true"/>
-                  <horizontalTextPosition value="0"/>
-                  <text value="Fazer Backup"/>
-                </properties>
-              </component>
-              <component id="b4e86" class="javax.swing.JButton" binding="fetchHistory">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Listar versões"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
-          <grid id="bf313" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="10" left="10" bottom="10" right="10"/>
-            <constraints>
-              <tabbedpane title="Restaurar"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <component id="50d8a" class="javax.swing.JTextField" binding="restoreFromDisplay">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties/>
-              </component>
-              <component id="b4b0c" class="javax.swing.JButton" binding="chooseRestoreFromButton">
-                <constraints>
-                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Selecionar"/>
-                </properties>
-              </component>
-              <component id="7429c" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Selecione a versão para ser restaurada abaixo:"/>
-                </properties>
-              </component>
-              <component id="8c318" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Backup existente"/>
-                </properties>
-              </component>
-              <scrollpane id="be0be">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="empty">
-                  <size top="5" left="0" bottom="5" right="0"/>
-                </border>
-                <children>
-                  <component id="edd37" class="javax.swing.JTextArea" binding="historySelect">
-                    <constraints/>
-                    <properties>
-                      <margin top="0" left="0" bottom="0" right="0"/>
-                    </properties>
-                  </component>
-                </children>
-              </scrollpane>
-              <component id="76710" class="javax.swing.JButton" binding="makeRestore">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Restaurar"/>
-                </properties>
-              </component>
-              <component id="7cb2e" class="javax.swing.JProgressBar" binding="restoreProgress">
-                <constraints>
-                  <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-              </component>
-            </children>
-          </grid>
+          <component id="2801f" class="javax.swing.JTable" binding="history">
+            <constraints/>
+            <properties>
+              <inheritsPopupMenu value="false"/>
+            </properties>
+          </component>
         </children>
-      </tabbedpane>
+      </scrollpane>
+      <component id="54c8b" class="javax.swing.JProgressBar" binding="progressBar">
+        <constraints>
+          <grid row="3" column="3" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="eeff1" class="javax.swing.JTextField" binding="backupsFolderField">
+        <constraints>
+          <grid row="0" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties>
+          <editable value="false"/>
+          <enabled value="true"/>
+          <text value=""/>
+        </properties>
+      </component>
+      <component id="1ff4" class="javax.swing.JButton" binding="makeBackupButton">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <borderPainted value="true"/>
+          <contentAreaFilled value="true"/>
+          <enabled value="false"/>
+          <horizontalTextPosition value="0"/>
+          <text value="Fazer Backup"/>
+        </properties>
+      </component>
+      <component id="14584" class="javax.swing.JButton" binding="restoreButton">
+        <constraints>
+          <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <enabled value="false"/>
+          <text value="Restaurar"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

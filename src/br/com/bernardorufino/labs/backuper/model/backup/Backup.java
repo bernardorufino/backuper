@@ -3,7 +3,7 @@ package br.com.bernardorufino.labs.backuper.model.backup;
 import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.FileNode;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
-import br.com.bernardorufino.labs.backuper.utils.Utils;
+import br.com.bernardorufino.labs.backuper.libs.Utils;
 import org.joda.time.DateTime;
 
 import java.io.File;
@@ -96,4 +96,7 @@ public abstract class Backup {
         snapshot.restore(clientFolder);
     }
 
+    public String getID() {
+        return id;
+    }
 }

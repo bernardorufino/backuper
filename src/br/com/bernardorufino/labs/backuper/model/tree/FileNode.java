@@ -1,7 +1,7 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
 import br.com.bernardorufino.labs.backuper.config.Definitions;
-import br.com.bernardorufino.labs.backuper.utils.Utils;
+import br.com.bernardorufino.labs.backuper.libs.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 

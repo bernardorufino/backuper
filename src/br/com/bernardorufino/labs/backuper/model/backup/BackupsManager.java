@@ -2,15 +2,11 @@ package br.com.bernardorufino.labs.backuper.model.backup;
 
 import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
-import br.com.bernardorufino.labs.backuper.utils.Utils;
+import br.com.bernardorufino.labs.backuper.libs.Utils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +34,12 @@ public class BackupsManager {
         this.backupsFolder = backupsFolder;
         this.clientsFolder = clientsFolder;
         this.history = new TreeMap<>();
+    }
+
+    public void mergeBackups(String firstBackupID, String lastBackupID) {
+        Backup first = history.get(firstBackupID);
+        Backup last = history.get(lastBackupID);
+        //TODO: Implement merge
     }
 
     public void fetchBackups() throws IOException {

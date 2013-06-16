@@ -11,10 +11,7 @@
 !---- Have to copy files on update()
 !---- Have to copy files on creation (strategy not defined)
 !---- Recursion, tree walk??
--- Create noModificationTree
--- Extract Settings!
 -- DATE OF SNAPSHOTS, NOT FILES!
 -- Test, test, test!
--- Handle Backups with backup manager
 -- close File objects!
 -- UI

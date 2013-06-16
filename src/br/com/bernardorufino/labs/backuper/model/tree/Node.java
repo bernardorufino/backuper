@@ -1,15 +1,12 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
 import br.com.bernardorufino.labs.backuper.config.Definitions;
-import br.com.bernardorufino.labs.backuper.utils.Utils;
-import org.apache.commons.lang3.StringUtils;
+import br.com.bernardorufino.labs.backuper.libs.Utils;
 import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Pattern;
-
-import static br.com.bernardorufino.labs.backuper.utils.Utils.*;
 
 public abstract class Node {
 

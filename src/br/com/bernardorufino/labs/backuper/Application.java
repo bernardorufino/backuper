@@ -17,7 +17,6 @@ public class Application {
         pool = Executors.newCachedThreadPool();
         controller = new BackupsController();
         view = BackupsView.create();
-        view.build();
     }
 
     public static void execute(Runnable runnable) {

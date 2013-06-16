@@ -1,4 +1,4 @@
-package br.com.bernardorufino.labs.backuper.utils;
+package br.com.bernardorufino.labs.backuper.libs;
 
 import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
@@ -75,7 +75,9 @@ public class Utils {
 
     public static void purge(File folder) throws IOException {
         //TODO: Check if it walks through the folder container itself
-        Files.walkFileTree(folder.toPath(), new Purger());
+        if (folder.exists()) {
+            Files.walkFileTree(folder.toPath(), new Purger());
+        }
     }
 
     public static void createContentFile(File folder, String name, String content) throws IOException {
