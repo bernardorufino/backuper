@@ -1,5 +1,6 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -21,8 +22,12 @@ public final class FileNode extends Node implements Cloneable {
         Utils.copyIntoFolder(file, parent.getBackupPath());
     }
 
+    public <T> T traverse(T memo, TreeWalker<T> walker) {
+        return walker.visitFile(memo, this);
+    }
+
     public String toList(int level) {
-        String indentation = StringUtils.repeat(NodeParser.INDENTATION, level);
+        String indentation = StringUtils.repeat(Definitions.INDENTATION, level);
         return indentation + toString();
     }
 
@@ -35,7 +40,7 @@ public final class FileNode extends Node implements Cloneable {
     }
 
     public void restore(File clientLocation) throws IOException {
-        Utils.copyIntoFolder(getBackupFsNode(), clientLocation);
+        Utils.copy(getBackupFsNode(), getFullPath(clientLocation.getParentFile()));
     }
 
     public FileNode track(File file, File newLocation) throws IOException {
@@ -48,53 +53,13 @@ public final class FileNode extends Node implements Cloneable {
         return new FileNode(name, Status.Modify, fileDate, location);
     }
 
-    public void merge(Node node) {
-        if (!parallel(node)) throw new IncompatibleNodeMergeException();
-        FileNode recent = (FileNode) node;
-        switch (status) {
-            case Create:
-                switch (recent.status) {
-                    case Create: throw new IncompatibleNodeMergeException();
-                    case Delete: destroy(); break;
-                    case Modify: safeUpdate(Status.Create, recent); break;
-                    case Existent: safeUpdate(Status.Create, recent); break;
-                }
-                break;
-            case Delete:
-                switch (recent.status) {
-                    case Create: safeUpdate(Status.Create, recent); break;
-                    case Delete:
-                    case Modify:
-                    case Existent: throw new IncompatibleNodeMergeException();
-                }
-                break;
-            case Modify:
-                switch (recent.status) {
-                    case Create: throw new IncompatibleNodeMergeException();
-                    case Delete: safeUpdate(Status.Delete, recent); break;
-                    case Modify: safeUpdate(Status.Modify, recent); break;
-                    case Existent: safeUpdate(Status.Create, this); break;
-                }
-                break;
-            case Existent:
-                switch (recent.status) {
-                    case Create: throw new IncompatibleNodeMergeException();
-                    case Delete: safeUpdate(Status.Delete, recent); break;
-                    case Modify: safeUpdate(Status.Modify, recent); break;
-                    case Existent: safeUpdate(Status.Existent, recent /* or this */); break;
-                }
-                break;
-        }
-    }
-
-    private void destroy() {
+    protected void destroy() {
         parent.removeChild(name);
     }
 
-    private void safeUpdate(Status status, Node update) {
-        this.status = status;
-        this.location = update.location;
-        this.date = update.date;
+    protected FileNode markForDeletion() {
+        FileNode clone = clone();
+        clone.status = Status.Delete;
+        return clone;
     }
-
 }

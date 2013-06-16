@@ -20,6 +20,7 @@ public class BaseBackup extends Backup {
     }
 
     public Node getSnapshot() {
+        snapshot = modificationsTree;
         return modificationsTree;
     }
 

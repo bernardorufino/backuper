@@ -1,5 +1,6 @@
 package br.com.bernardorufino.labs.backuper.model.backup;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
@@ -16,17 +17,13 @@ import java.util.regex.Pattern;
 
 public class BackupsManager {
 
-    /* package private */ static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmmssS");
-    /* package private */ static final String BASE_BACKUP_HEAD = "BASE";
-    /* package private */ static final String MODIFICATIONS_FILE_EXTENSION = "diff";
-
     public static boolean isModificationsFile(File file) {
         if (!file.isFile()) return false;
-        String pattern = "^(\\d{2}\\d{2}\\d{4}\\d{2}\\d{2}\\d{2}\\d{1,5})\\." + MODIFICATIONS_FILE_EXTENSION + "$";
+        String pattern = "^(\\d{2}\\d{2}\\d{4}\\d{2}\\d{2}\\d{2}\\d{1,5})\\." + Definitions.MODIFICATIONS_FILE_EXTENSION + "$";
         Matcher m = Pattern.compile(pattern).matcher(file.getName());
         if (!m.matches()) return false;
         try {
-            DATE_FORMAT.parseDateTime(m.group(1));
+            Definitions.DATE_FORMAT.parseDateTime(m.group(1));
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -63,10 +60,10 @@ public class BackupsManager {
         String content = StringUtils.join(lines, "\n");
         Node tree = Node.fromList(content, backupFolder);
         Backup backup;
-        if (head.equals(BASE_BACKUP_HEAD)) {
+        if (head.equals(Definitions.BASE_BACKUP_HEAD)) {
             backup = new BaseBackup(id, tree, backupFolder, clientsFolder, backupsFolder);
         } else {
-            File previousFile = getFsNode(head + "." + MODIFICATIONS_FILE_EXTENSION);
+            File previousFile = getFsNode(head + "." + Definitions.MODIFICATIONS_FILE_EXTENSION);
             Backup previous = createFromModificationsFile(previousFile);
             backup = new IncrementalBackup(id, previous, tree, backupFolder, clientsFolder, backupsFolder);
         }
@@ -78,19 +75,22 @@ public class BackupsManager {
         return history.lastEntry().getValue();
     }
 
-    public Backup update() throws IOException {
-        Backup backup = new IncrementalBackup(getRecent());
+    private Backup add(Backup backup) {
         history.put(backup.id, backup);
         return backup;
     }
 
     public Backup makeBackup() throws IOException {
-        if (history.size() > 0) return update();
-        return new BaseBackup(clientsFolder, backupsFolder);
+        if (history.size() > 0) {
+            return add(new IncrementalBackup(getRecent()));
+        } else {
+            return add(new BaseBackup(clientsFolder, backupsFolder));
+        }
     }
 
-    public void reset() throws IOException {
-        /* Empty */
+    public void restore(String id) throws IOException {
+        history.get(id).restore();
+        makeBackup();
     }
 
     private File getFsNode(String fileName) {

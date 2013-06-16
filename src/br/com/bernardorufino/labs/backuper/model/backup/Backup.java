@@ -1,18 +1,18 @@
 package br.com.bernardorufino.labs.backuper.model.backup;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
+import br.com.bernardorufino.labs.backuper.model.tree.FileNode;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
+
+import static br.com.bernardorufino.labs.backuper.model.tree.Node.*;
+
 
 public abstract class Backup {
 
@@ -22,6 +22,8 @@ public abstract class Backup {
     protected File backupFolder;
     protected File clientFolder;
     protected File backupsFolder;
+    protected Map<Node.Status, Integer> summary;
+    protected Node snapshot;
 
     protected Backup(Backup previous, File clientFolder, File backupsFolder) throws IOException {
         this.previous = previous;
@@ -44,7 +46,7 @@ public abstract class Backup {
     protected String toBuildingString() {
         StringBuilder string = new StringBuilder();
         if (previous == null) {
-            string.append(BackupsManager.BASE_BACKUP_HEAD);
+            string.append(Definitions.BASE_BACKUP_HEAD);
         } else {
             string.append(previous.id);
         }
@@ -56,12 +58,34 @@ public abstract class Backup {
 
     protected final void writeModificationsFile() throws IOException {
         String content = toBuildingString();
-        String name = id + "." + BackupsManager.MODIFICATIONS_FILE_EXTENSION;
+        String name = id + "." + Definitions.MODIFICATIONS_FILE_EXTENSION;
         Utils.createContentFile(backupsFolder, name, content);
     }
 
     private String generateID() {
-        return BackupsManager.DATE_FORMAT.print(DateTime.now());
+        return Definitions.DATE_FORMAT.print(DateTime.now());
+    }
+
+    public DateTime getDate() {
+        return Definitions.DATE_FORMAT.parseDateTime(id);
+    }
+
+    public Map<Node.Status, Integer> getSummary() {
+        if (summary != null) return summary;
+        summary = new HashMap<>();
+        for (Status status : Status.values()) {
+            summary.put(status, 0);
+        }
+        if (modificationsTree != null) {
+            modificationsTree.traverse(summary, new Node.SimpleTreeWalker<Map<Node.Status, Integer>>() {
+                public Map<Node.Status, Integer> visitFile(Map<Node.Status, Integer> memo, FileNode file) {
+                    Status status = file.getStatus();
+                    summary.put(status, summary.get(status) + 1);
+                    return summary;
+                }
+            });
+        }
+        return summary;
     }
 
     public abstract Node getSnapshot();

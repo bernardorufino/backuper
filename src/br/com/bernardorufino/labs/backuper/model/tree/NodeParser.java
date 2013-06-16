@@ -1,5 +1,6 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -13,23 +14,15 @@ import java.util.regex.Pattern;
 
 public class NodeParser {
 
-    public static final String INDENTATION = "  ";
-    public static final String DELIMITER = " ";
-    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormat.mediumDateTime();
 
-    public static void main(String[] args) {
-
-    }
-
-    private static final String DELIMITER_REPLACEMENT = "_";
 
     /* package private */ static String toProperty(String string) {
         if (string.contains("_")) throw new RuntimeException("Change delimiter replacement in NodeParser.REPLACEMENT");
-        return "<" + string.toUpperCase().replace(DELIMITER, DELIMITER_REPLACEMENT) + ">";
+        return "<" + string.toUpperCase().replace(Definitions.DELIMITER, Definitions.DELIMITER_REPLACEMENT) + ">";
     }
 
     /* package private */ static String fromProperty(String property) {
-        return StringUtils.capitalize(StringUtils.strip(property, "<>").toLowerCase().replace(DELIMITER_REPLACEMENT, DELIMITER));
+        return StringUtils.capitalize(StringUtils.strip(property, "<>").toLowerCase().replace(Definitions.DELIMITER_REPLACEMENT, Definitions.DELIMITER));
     }
 
     public static Node fromList(String list, File location) {
@@ -54,6 +47,7 @@ public class NodeParser {
             level = data.level;
             if (data.node.isFolder()) folder = (FolderNode) data.node;
         }
+        if (root.getChildren().size() < 1) return null;
         Node node = root.getChildren().get(0);
         node.setParent(null);
         return node;
@@ -73,15 +67,15 @@ public class NodeParser {
         // Parse initial indentation (usually whitespaces) counting currentLevel and
         // use the remaining string to create a node.
         LineData result = new LineData();
-        Matcher m = Pattern.compile("^((?:" + INDENTATION + ")*)(.+)$").matcher(line);
+        Matcher m = Pattern.compile("^((?:" + Definitions.INDENTATION + ")*)(.+)$").matcher(line);
         if (!m.lookingAt()) return null;
         // Set the depth level by the indentation
-        result.level = m.group(1).length() / INDENTATION.length();
-        Scanner scan = new Scanner(m.group(2)).useDelimiter(DELIMITER);
+        result.level = m.group(1).length() / Definitions.INDENTATION.length();
+        Scanner scan = new Scanner(m.group(2)).useDelimiter(Definitions.DELIMITER);
         // <TYPE> <STATUS> <DATE> NameOfTheFileOrFolder
         Node.Type type = Node.Type.valueOf(fromProperty(scan.next()));
         Node.Status status = Node.Status.valueOf(fromProperty(scan.next()));
-        DateTime date = DATE_FORMATTER.parseDateTime(fromProperty(scan.next()));
+        DateTime date = Definitions.DATE_FORMATTER.parseDateTime(fromProperty(scan.next()));
         String name = scan.next();
         result.node = Node.create(type, name, status, date, location);
         return result;

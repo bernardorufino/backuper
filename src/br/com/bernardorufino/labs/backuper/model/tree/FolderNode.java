@@ -1,5 +1,6 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import static br.com.bernardorufino.labs.backuper.utils.Utils.*;
 import org.apache.commons.lang3.StringUtils;
@@ -11,9 +12,8 @@ import java.util.*;
 
 public final class FolderNode extends Node implements Cloneable {
 
-
     public static FolderNode getDummyRoot() {
-        FolderNode dummy = new FolderNode(null, Status.Existent, DateTime.now(), null);
+        FolderNode dummy = new FolderNode(null, Status.Create, DateTime.now(), null);
         dummy.relativePath = "";
         return dummy;
     }
@@ -39,6 +39,15 @@ public final class FolderNode extends Node implements Cloneable {
             Node child = Node.createFromFileSystem(fsNode, location, this);
             addChild(child);
         }
+    }
+
+    public <T> T traverse(T memo, TreeWalker<T> walker) {
+        memo = walker.preChildren(memo, this);
+        for (Node node : children.values()) {
+            memo = node.traverse(memo, walker);
+        }
+        memo = walker.postChildren(memo, this);
+        return memo;
     }
 
     // To be called only when this folder is already attached to it's parent
@@ -68,9 +77,13 @@ public final class FolderNode extends Node implements Cloneable {
         children.remove(name);
     }
 
+    protected void replaceChild(Node child) {
+        children.put(child.name, child);
+    }
+
     public String toList(int level) {
         StringBuilder list = new StringBuilder();
-        list.append(StringUtils.repeat(NodeParser.INDENTATION, level));
+        list.append(StringUtils.repeat(Definitions.INDENTATION, level));
         list.append(toString());
         for (Node p : children.values()) {
             list.append("\n").append(p.toList(level + 1));
@@ -83,21 +96,33 @@ public final class FolderNode extends Node implements Cloneable {
     }
 
     public void merge(Node node) {
+        if (node == null) return;
         if (!parallel(node)) throw new IncompatibleNodeMergeException();
         FolderNode recentFolder = (FolderNode) node;
         Map<String, Node> recents = new HashMap<>(recentFolder.children);
-        for (Node old : children.values()) {
+        // In order to preserve the loop, because inside the first for,
+        // child nodes of this node can be removed by FileNode.merge,
+        // and it can avoid the loop
+        List<Node> childrenNodes = new ArrayList<>(children.values());
+        for (Node old : childrenNodes) {
             // If recent is nonexistent preserve old one
             if (!recents.containsKey(old.name)) continue;
-            old.merge(recents.get(old.name));
+//            System.out.println("Merging " + old + " with " + recents.get(old.name));
+            Node n = recents.get(old.name);
+//            System.out.println(old.name);
+            old.merge(n);
             recents.remove(old.name);
         }
         for (Node recent : recents.values()) {
-            if (recent.status == Status.Existent)
-                throw new IncompatibleNodeMergeException();
             // If only recent exist, simple add a clone of it to children
             addChild(recent.clone());
         }
+        // Now updates its metadata (status, date and location)
+        super.merge(node);
+    }
+
+    protected void destroy() {
+        parent.removeChild(name);
     }
 
     public FolderNode track(File folder, File newLocation) throws IOException {
@@ -133,6 +158,7 @@ public final class FolderNode extends Node implements Cloneable {
     public FolderNode getModifiedScaffold(File newLocation) {
         FolderNode node = new FolderNode(name, Status.Modify, date, newLocation);
         node.setParent(parent);
+        node.relativePath = relativePath;
         return node;
     }
 
@@ -140,17 +166,25 @@ public final class FolderNode extends Node implements Cloneable {
         FolderNode clone = (FolderNode) super.clone();
         clone.children = new LinkedHashMap<>();
         for (Node node : children.values()) {
-            addChild(node.clone());
+            clone.addChild(node.clone());
         }
         return clone;
     }
 
     public void restore(File clientLocation) throws IOException {
         // Have to copy the empty folder first
-        Utils.copyIntoFolder(getBackupFsNode(), clientLocation);
+        Utils.createFolder(getFullPath(clientLocation.getParentFile()));
         for (Node node : children.values()) {
             node.restore(clientLocation);
         }
     }
 
+    protected FolderNode markForDeletion() {
+        FolderNode clone = clone();
+        clone.status = Status.Delete;
+        for (Node child : clone.getChildren()) {
+            clone.replaceChild(child.markForDeletion());
+        }
+        return clone;
+    }
 }

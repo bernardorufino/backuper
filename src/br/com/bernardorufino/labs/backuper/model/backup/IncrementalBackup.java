@@ -20,7 +20,8 @@ public class IncrementalBackup extends Backup {
     }
 
     public Node getSnapshot() {
-        Node snapshot = previous.getSnapshot().clone();
+        if (snapshot != null) return snapshot;
+        snapshot = previous.getSnapshot().clone();
         snapshot.merge(modificationsTree);
         return snapshot;
     }

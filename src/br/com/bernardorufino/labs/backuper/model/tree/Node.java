@@ -1,5 +1,6 @@
 package br.com.bernardorufino.labs.backuper.model.tree;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.utils.Utils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -14,14 +15,19 @@ public abstract class Node {
 
     public static final String SEPARATOR = File.separator;
 
-    public static class IncompatibleNodeMergeException extends RuntimeException { /* Empty */ }
+    public static class IncompatibleNodeMergeException extends RuntimeException {
+        public IncompatibleNodeMergeException() { super(); }
+        public IncompatibleNodeMergeException(String message) { super(message); }
+    }
 
-    public static class IncompatibleNodeException extends RuntimeException { /* Empty */ }
-
+    public static class IncompatibleNodeException extends RuntimeException {
+        public IncompatibleNodeException() { super(); }
+        public IncompatibleNodeException(String message) { super(message); }
+    }
 
     public static enum Type { File, Folder }
 
-    public static enum Status { Create, Delete, Modify, Existent }
+    public static enum Status { Create, Delete, Modify }
 
 
     public static Node fromList(String list, File location) {
@@ -46,6 +52,18 @@ public abstract class Node {
 
     public static Node createFromFileSystem(File fsNode, File location) throws IOException {
         return createFromFileSystem(fsNode, location, null);
+    }
+
+    public static interface TreeWalker<T> {
+        public T preChildren(T memo, FolderNode folder);
+        public T postChildren(T memo, FolderNode folder);
+        public T visitFile(T memo, FileNode file);
+    }
+
+    public static class SimpleTreeWalker<T> implements TreeWalker<T> {
+        public T preChildren(T memo, FolderNode folder) { return memo; }
+        public T postChildren(T memo, FolderNode folder) { return memo; }
+        public T visitFile(T memo, FileNode file) { return memo; }
     }
 
     protected final String name;
@@ -94,6 +112,10 @@ public abstract class Node {
         return getFullPath(location);
     }
 
+    public Status getStatus() {
+        return status;
+    }
+
     protected String getFullPath(File backupLocation) {
         return Utils.joinPaths(backupLocation.getPath(), relativePath);
     }
@@ -107,17 +129,52 @@ public abstract class Node {
         String property;
         StringBuilder string = new StringBuilder();
         property = NodeParser.toProperty(getType().toString());
-        string.append(property).append(NodeParser.DELIMITER);
+        string.append(property).append(Definitions.DELIMITER);
         property = NodeParser.toProperty(status.toString());
-        string.append(property).append(NodeParser.DELIMITER);
-        property = NodeParser.DATE_FORMATTER.print(date);
+        string.append(property).append(Definitions.DELIMITER);
+        property = Definitions.DATE_FORMATTER.print(date);
         property = NodeParser.toProperty(property);
-        string.append(property).append(NodeParser.DELIMITER);
+        string.append(property).append(Definitions.DELIMITER);
         string.append(name);
         return string.toString();
     }
 
-    public abstract void merge(Node node);
+    public void merge(Node recent) {
+        if (!parallel(recent)) throw new IncompatibleNodeMergeException();
+//        System.out.println("old state " + status + ", new state " + recent.status);
+        switch (status) {
+            case Create:
+                switch (recent.status) {
+                    case Create: throw new IncompatibleNodeMergeException("Cannot merge " + status + " with " + recent.status);
+                    case Delete: destroy(); break;
+                    case Modify: safeUpdate(Status.Create, recent); break;
+                }
+                break;
+            case Delete:
+                switch (recent.status) {
+                    case Create: safeUpdate(Status.Create, recent); break;
+                    case Delete:
+                    case Modify:
+                }
+                break;
+            case Modify:
+                switch (recent.status) {
+                    case Create: throw new IncompatibleNodeMergeException("Cannot merge " + status + " with " + recent.status);
+                    case Delete: safeUpdate(Status.Delete, recent); break;
+                    case Modify: safeUpdate(Status.Modify, recent); break;
+                }
+                break;
+        }
+    }
+
+    protected abstract void destroy();
+
+    private void safeUpdate(Status status, Node update) {
+        this.status = status;
+        this.location = update.location;
+        this.date = update.date;
+    }
+
 
     public boolean isParallel(File file) {
         return getType() == fsNodeType(file)
@@ -137,11 +194,7 @@ public abstract class Node {
         return node != null && getType() == node.getType() && relativePath.equals(node.relativePath);
     }
 
-    public Node markForDeletion() {
-        Node clone = clone();
-        clone.status = Status.Delete;
-        return clone;
-    }
+    protected abstract Node markForDeletion();
 
     // Not throwing exception because it's known beforehand that
     // all subclasses implement Cloneable
@@ -156,5 +209,7 @@ public abstract class Node {
     }
 
     public abstract void restore(File clientLocation) throws IOException;
+
+    public abstract <T> T traverse(T memo, TreeWalker<T> walker);
 
 }

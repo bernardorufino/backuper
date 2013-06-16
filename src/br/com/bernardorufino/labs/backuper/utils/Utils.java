@@ -1,29 +1,27 @@
 package br.com.bernardorufino.labs.backuper.utils;
 
+import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
-import br.com.bernardorufino.labs.backuper.model.tree.NodeParser;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeComparator;
-import org.joda.time.DateTimeFieldType;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.file.*;
-
-import static java.nio.file.StandardCopyOption.*;
-
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.List;
 import java.util.Map;
 
-public class Utils {
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-    public static DateTimeComparator dateComparator = DateTimeComparator.getInstance(DateTimeFieldType.secondOfMinute());
+public class Utils {
 
     public static class FileDate {
         public DateTime createdAt, modifiedAt;
@@ -125,7 +123,7 @@ public class Utils {
     }
 
     public static boolean isAfter(DateTime a, DateTime b) {
-        return dateComparator.compare(a, b) > 0;
+        return Definitions.dateComparator.compare(a, b) > 0;
     }
 
 }
