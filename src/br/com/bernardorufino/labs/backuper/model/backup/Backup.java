@@ -80,6 +80,7 @@ public abstract class Backup {
             summary.put(status, 0);
         }
         for (Node tree : trees.values()) {
+            if (tree == null) continue;
             tree.traverse(summary, new Node.SimpleTreeWalker<Map<Node.Status, Integer>>() {
                 public Map<Node.Status, Integer> visitFile(Map<Node.Status, Integer> memo, FileNode file) {
                     Status status = file.getStatus();

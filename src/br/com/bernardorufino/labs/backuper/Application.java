@@ -5,6 +5,7 @@ import br.com.bernardorufino.labs.backuper.view.BackupsView;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Application {
     public static BackupsManager controller;
@@ -17,8 +18,8 @@ public class Application {
         view = BackupsView.create();
     }
 
-    public static void execute(Runnable runnable) {
-        pool.submit(runnable);
+    public static Future execute(Runnable runnable) {
+        return pool.submit(runnable);
     }
 
 

@@ -2,6 +2,7 @@ package br.com.bernardorufino.labs.backuper.libs;
 
 import br.com.bernardorufino.labs.backuper.config.Definitions;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
+import com.sun.nio.file.ExtendedCopyOption;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -69,7 +70,7 @@ public class Utils {
         File target = new File(location);
         target.getParentFile().mkdirs();
         // COPY_ATTRIBUTES ?
-        return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING).toFile();
+        return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING, ExtendedCopyOption.INTERRUPTIBLE).toFile();
     }
 
     private static class Purger extends SimpleFileVisitor<Path> {
@@ -94,6 +95,10 @@ public class Utils {
         if (folder.exists()) {
             Files.walkFileTree(folder.toPath(), new Purger());
         }
+    }
+
+    public static void delete(File file) throws IOException {
+        Files.delete(file.toPath());
     }
 
     public static void createContentFile(File folder, String name, String content) throws IOException {

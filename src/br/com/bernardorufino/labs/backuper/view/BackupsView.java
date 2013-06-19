@@ -2,6 +2,8 @@ package br.com.bernardorufino.labs.backuper.view;
 
 import br.com.bernardorufino.labs.backuper.Application;
 import br.com.bernardorufino.labs.backuper.controller.BackupsManager;
+import br.com.bernardorufino.labs.backuper.controller.BackupsTransaction;
+import br.com.bernardorufino.labs.backuper.controller.Transaction;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -14,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 
 public class BackupsView {
@@ -43,6 +46,7 @@ public class BackupsView {
     private JButton restoreButton;
     private JButton addOriginButton;
     private JList clientFoldersList;
+    private JButton cancelButton;
 
     private String backupsFolder;
     private String clientFolder;
@@ -51,10 +55,12 @@ public class BackupsView {
     private HistoryAdapter historyModel;
     private DefaultListModel<String> clientFoldersListModel;
     private BackupsManager manager;
-    private boolean uiLocked = false;
+    private BackupsTransaction transactions;
+    private Future backgroundTask;
 
     public BackupsView() {
         manager = Application.controller;
+        transactions = new BackupsTransaction(manager);
         build();
         setListeners();
     }
@@ -84,6 +90,12 @@ public class BackupsView {
         frame.pack();
         frame.setVisible(true);
 
+        // Adjust table of backup versions
+        historyModel = new HistoryAdapter(manager.getBackups());
+        history.setModel(historyModel);
+        history.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        history.getColumn(historyModel.getColumnName(0)).setMinWidth((int) (history.getWidth() * 0.75));
+
         // Comment below in production
 //        backupsFolder = "D:\\Backuper\\Backup";
 //        clientFolder = "D:\\Backuper\\Client";
@@ -96,11 +108,8 @@ public class BackupsView {
     }
 
     private void setUpHistoryTable() {
-        historyModel = new HistoryAdapter(Application.controller.getBackups());
-        history.setModel(historyModel);
-        // Change below to INTERVAL_SELECTION when merge is ready
-        history.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        history.getColumn(historyModel.getColumnName(0)).setMinWidth((int) (history.getWidth() * 0.75));
+        historyModel.update(manager.getBackups());
+        history.updateUI();
     }
 
     private void startProgressBar() { progressBar.setIndeterminate(true); }
@@ -131,7 +140,6 @@ public class BackupsView {
     }
 
     private void updateButtonsState() {
-        if (uiLocked) return;
         chooseOrigin.setEnabled(!manager.hasBackups());
         addOriginButton.setEnabled(!manager.hasBackups());
         restoreButton.setEnabled(
@@ -141,9 +149,11 @@ public class BackupsView {
         );
         makeBackupButton.setEnabled(manager.getClientFolders().size() > 0);
         chooseDestination.setEnabled(true);
+        cancelButton.setEnabled(false);
     }
 
-    private void disableCriticalActionButtons() {
+    private void disableCriticalActionButtons(boolean canCancel) {
+        cancelButton.setEnabled(canCancel);
         chooseDestination.setEnabled(false);
         addOriginButton.setEnabled(false);
         makeBackupButton.setEnabled(false);
@@ -165,11 +175,12 @@ public class BackupsView {
             public boolean dispatchKeyEvent(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_F5:
-                        Application.execute(new Runnable() {
+                        backgroundTask = Application.execute(new Runnable() {
                             public void run() {
                                 startProgressBar();
                                 fetchClientFolders();
                                 updateButtonsState();
+                                updateClientFoldersList();
                                 setUpHistoryTable();
                                 finishProgressBar();
                             }
@@ -181,8 +192,16 @@ public class BackupsView {
         });
 
         history.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent e) {
-                updateButtonsState();
+            public void valueChanged(ListSelectionEvent e) { updateButtonsState(); }
+        });
+
+        clientFoldersList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) { updateButtonsState(); }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (backgroundTask != null) { backgroundTask.cancel(true); }
             }
         });
 
@@ -191,9 +210,9 @@ public class BackupsView {
                 if (folderChooser("Escolha uma pasta destino")) {
                     backupsFolderField.setText(folderChosen);
                     backupsFolder = folderChosen;
-                    Application.execute(new Runnable() {
+                    backgroundTask = Application.execute(new Runnable() {
                         public void run() {
-                            disableCriticalActionButtons();
+                            disableCriticalActionButtons(false);
                             startProgressBar();
                             manager.setBackupsFolder(new File(backupsFolder));
                             fetchClientFolders();
@@ -230,15 +249,17 @@ public class BackupsView {
 
         makeBackupButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                Application.execute(new Runnable() {
+                backgroundTask = Application.execute(new Runnable() {
                     public void run() {
-                        disableCriticalActionButtons();
+                        disableCriticalActionButtons(true);
                         startProgressBar();
+                        Transaction t = transactions.makeBackup();
                         try {
-                            manager.makeBackup();
-                        } catch (IOException err) {
-                            JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
-                            err.printStackTrace();
+                            System.out.println("1");
+                            System.out.println(t.execute());
+                            System.out.println("2");
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         } finally {
                             updateButtonsState();
                             setUpHistoryTable();
@@ -256,17 +277,15 @@ public class BackupsView {
                 int choice = JOptionPane.showConfirmDialog(frame,
                         "Tem certeza que deseja restaurar a versão " + versionName, null, JOptionPane.YES_NO_OPTION);
                 if (choice != JOptionPane.YES_OPTION) return;
-                Application.execute(new Runnable() {
+                backgroundTask = Application.execute(new Runnable() {
                     public void run() {
-                        disableCriticalActionButtons();
+                        disableCriticalActionButtons(true);
                         startProgressBar();
+                        String id = historyModel.getID(row);
+                        List<File> clientFolders = getSelectedClientFolders();
+                        Transaction t = transactions.restore(id, clientFolders);
                         try {
-                            String id = historyModel.getID(row);
-                            List<File> clientFolders = getSelectedClientFolders();
-                            manager.restore(id, clientFolders);
-                        } catch (IOException err) {
-                            JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
-                            err.printStackTrace();
+                            t.execute();
                         } finally {
                             updateButtonsState();
                             setUpHistoryTable();
