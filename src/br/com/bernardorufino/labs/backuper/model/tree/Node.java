@@ -47,7 +47,7 @@ public abstract class Node {
         }
     }
 
-    public static Node createFromFileSystem(File fsNode, File location) throws IOException {
+    public static Node fromFileSystem(File fsNode, File location) throws IOException {
         return createFromFileSystem(fsNode, location, null);
     }
 
@@ -138,7 +138,6 @@ public abstract class Node {
 
     public void merge(Node recent) {
         if (!parallel(recent)) throw new IncompatibleNodeMergeException();
-//        System.out.println("old state " + status + ", new state " + recent.status);
         switch (status) {
             case Create:
                 switch (recent.status) {

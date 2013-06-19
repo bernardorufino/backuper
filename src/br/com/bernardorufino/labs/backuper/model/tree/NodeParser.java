@@ -14,8 +14,6 @@ import java.util.regex.Pattern;
 
 public class NodeParser {
 
-
-
     /* package private */ static String toProperty(String string) {
         if (string.contains("_")) throw new RuntimeException("Change delimiter replacement in NodeParser.REPLACEMENT");
         return "<" + string.toUpperCase().replace(Definitions.DELIMITER, Definitions.DELIMITER_REPLACEMENT) + ">";

@@ -17,6 +17,8 @@ public class Definitions {
 
     public static final String MODIFICATIONS_FILE_EXTENSION = "diff";
 
+    public static final String CLIENT_FOLDER_MARKER = "<CLIENT>";
+
     public static final String INDENTATION = "  ";
 
     public static final String DELIMITER = " ";

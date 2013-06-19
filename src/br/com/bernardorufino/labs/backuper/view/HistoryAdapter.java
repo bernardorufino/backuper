@@ -52,4 +52,9 @@ public class HistoryAdapter extends AbstractTableModel {
         }
         return null;
     }
+
+    public String getID(int row) {
+        return backups.get(row).id;
+    }
+
 }

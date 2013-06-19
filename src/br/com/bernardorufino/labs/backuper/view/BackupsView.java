@@ -1,6 +1,7 @@
 package br.com.bernardorufino.labs.backuper.view;
 
 import br.com.bernardorufino.labs.backuper.Application;
+import br.com.bernardorufino.labs.backuper.controller.BackupsManager;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -8,9 +9,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class BackupsView {
@@ -18,7 +21,7 @@ public class BackupsView {
     public static final String ERROR_MESSAGE = "Ocorreu um erro.";
     public static final String TITLE = "Backuper";
 
-    public static final int WIDTH = 400;
+    public static final int WIDTH = 580;
     public static final int HEIGHT = 400;
     public static final String lookAndFeel = UIManager.getSystemLookAndFeelClassName();
 
@@ -38,19 +41,30 @@ public class BackupsView {
     private JButton chooseDestination;
     private JButton chooseOrigin;
     private JButton restoreButton;
+    private JButton addOriginButton;
+    private JList clientFoldersList;
 
     private String backupsFolder;
     private String clientFolder;
     private JFileChooser chooser;
     private String folderChosen;
     private HistoryAdapter historyModel;
+    private DefaultListModel<String> clientFoldersListModel;
+    private BackupsManager manager;
+    private boolean uiLocked = false;
 
     public BackupsView() {
+        manager = Application.controller;
         build();
         setListeners();
     }
 
     public void build() {
+
+        // clientFoldersList setup with default model
+        clientFoldersListModel = new DefaultListModel<>();
+        clientFoldersList.setModel(clientFoldersListModel);
+        clientFoldersList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
         // File chooser setup
         chooser = new JFileChooser();
@@ -71,30 +85,18 @@ public class BackupsView {
         frame.setVisible(true);
 
         // Comment below in production
-        backupsFolder = "D:\\Backuper\\Backup";
-        clientFolder = "D:\\Backuper\\Client";
-        backupsFolderField.setText(backupsFolder);
-        clientFolderField.setText(clientFolder);
-        // History table running
-        // Needs to be after the window creation to set columns width properly
-        setUpController();
+//        backupsFolder = "D:\\Backuper\\Backup";
+//        clientFolder = "D:\\Backuper\\Client";
+//        backupsFolderField.setText(backupsFolder);
+//        clientFolderField.setText(clientFolder);
+//        // History table running
+//        // Needs to be after the window creation to set columns width properly
+//        setUpController();
 
-    }
-
-    private void setUpController() {
-        if (backupsFolder == null || clientFolder == null) return;
-        try {
-            Application.controller.setUp(backupsFolder, clientFolder);
-            makeBackupButton.setEnabled(true);
-        } catch (IOException e) {
-            makeBackupButton.setEnabled(false);
-            JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
-        }
-        setUpHistoryTable();
     }
 
     private void setUpHistoryTable() {
-        historyModel = Application.controller.getHistoryAdapter();
+        historyModel = new HistoryAdapter(Application.controller.getBackups());
         history.setModel(historyModel);
         // Change below to INTERVAL_SELECTION when merge is ready
         history.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -111,6 +113,52 @@ public class BackupsView {
         return chosen;
     }
 
+    private void fetchClientFolders() {
+        try {
+            manager.fetchBackups();
+        } catch (IOException err) {
+            JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
+            err.printStackTrace();
+        }
+        updateClientFoldersList();
+    }
+
+    private void updateClientFoldersList() {
+        clientFoldersListModel.clear();
+        for (File folder : manager.getClientFolders()) {
+            clientFoldersListModel.addElement(folder.getAbsolutePath());
+        }
+    }
+
+    private void updateButtonsState() {
+        if (uiLocked) return;
+        chooseOrigin.setEnabled(!manager.hasBackups());
+        addOriginButton.setEnabled(!manager.hasBackups());
+        restoreButton.setEnabled(
+                manager.hasBackups()
+                && (history.getSelectedRows().length == 1)
+                && (clientFoldersList.getSelectedIndices().length > 0)
+        );
+        makeBackupButton.setEnabled(manager.getClientFolders().size() > 0);
+        chooseDestination.setEnabled(true);
+    }
+
+    private void disableCriticalActionButtons() {
+        chooseDestination.setEnabled(false);
+        addOriginButton.setEnabled(false);
+        makeBackupButton.setEnabled(false);
+        restoreButton.setEnabled(false);
+    }
+
+    private List<File> getSelectedClientFolders() {
+        List<File> clientFolders = manager.getClientFolders();
+        List<File> selection = new ArrayList<>();
+        for (int i : clientFoldersList.getSelectedIndices()) {
+            selection.add(clientFolders.get(i));
+        }
+        return selection;
+    }
+
     private void setListeners() {
 
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -120,7 +168,9 @@ public class BackupsView {
                         Application.execute(new Runnable() {
                             public void run() {
                                 startProgressBar();
-                                setUpController();
+                                fetchClientFolders();
+                                updateButtonsState();
+                                setUpHistoryTable();
                                 finishProgressBar();
                             }
                         });
@@ -132,7 +182,7 @@ public class BackupsView {
 
         history.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                restoreButton.setEnabled(history.getSelectedRows().length == 1);
+                updateButtonsState();
             }
         });
 
@@ -143,8 +193,12 @@ public class BackupsView {
                     backupsFolder = folderChosen;
                     Application.execute(new Runnable() {
                         public void run() {
+                            disableCriticalActionButtons();
                             startProgressBar();
-                            setUpController();
+                            manager.setBackupsFolder(new File(backupsFolder));
+                            fetchClientFolders();
+                            setUpHistoryTable();
+                            updateButtonsState();
                             finishProgressBar();
                         }
                     });
@@ -157,14 +211,20 @@ public class BackupsView {
                 if (folderChooser("Escolha uma pasta de origem")) {
                     clientFolderField.setText(folderChosen);
                     clientFolder = folderChosen;
-                    Application.execute(new Runnable() {
-                        public void run() {
-                            startProgressBar();
-                            setUpController();
-                            finishProgressBar();
-                        }
-                    });
                 }
+            }
+        });
+
+        addOriginButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                File folder = new File(clientFolder);
+                if (folder.exists()) {
+                    manager.addClientFolder(folder);
+                } else {
+                    JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
+                }
+                updateButtonsState();
+                updateClientFoldersList();
             }
         });
 
@@ -172,13 +232,15 @@ public class BackupsView {
             public void actionPerformed(ActionEvent e) {
                 Application.execute(new Runnable() {
                     public void run() {
+                        disableCriticalActionButtons();
                         startProgressBar();
                         try {
-                            Application.controller.makeBackup();
+                            manager.makeBackup();
                         } catch (IOException err) {
                             JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
                             err.printStackTrace();
                         } finally {
+                            updateButtonsState();
                             setUpHistoryTable();
                             finishProgressBar();
                         }
@@ -189,20 +251,24 @@ public class BackupsView {
 
         restoreButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                final int backupIndex = history.getSelectedRow();
-                String versionName = (String) historyModel.getValueAt(backupIndex, 0);
+                final int row = history.getSelectedRow();
+                String versionName = (String) historyModel.getValueAt(row, 0);
                 int choice = JOptionPane.showConfirmDialog(frame,
                         "Tem certeza que deseja restaurar a versão " + versionName, null, JOptionPane.YES_NO_OPTION);
                 if (choice != JOptionPane.YES_OPTION) return;
                 Application.execute(new Runnable() {
                     public void run() {
+                        disableCriticalActionButtons();
                         startProgressBar();
                         try {
-                            Application.controller.restore(backupIndex);
+                            String id = historyModel.getID(row);
+                            List<File> clientFolders = getSelectedClientFolders();
+                            manager.restore(id, clientFolders);
                         } catch (IOException err) {
                             JOptionPane.showMessageDialog(frame, ERROR_MESSAGE);
                             err.printStackTrace();
                         } finally {
+                            updateButtonsState();
                             setUpHistoryTable();
                             finishProgressBar();
                         }

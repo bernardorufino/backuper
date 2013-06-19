@@ -16,12 +16,23 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class Utils {
+
+    public static <K, V> Map<K, V> extract(Map<K, V> map, Collection<K> keys) {
+        Map<K, V> newMap = new HashMap<>();
+        for (K key : keys) {
+            newMap.put(key, map.get(key));
+        }
+        return newMap;
+    }
 
     public static class FileDate {
         public DateTime createdAt, modifiedAt;
@@ -42,6 +53,10 @@ public class Utils {
         return date.createdAt.isAfter(date.modifiedAt) ? date.createdAt : date.modifiedAt;
     }
 
+    public static File getFsNode(File folder, String name) throws IOException {
+        return folder.toPath().resolve(name).toFile();
+    }
+
     public static File copyIntoFolder(File file, String location) throws IOException {
         return copyIntoFolder(file, new File(location));
     }
@@ -53,6 +68,7 @@ public class Utils {
     public static File copy(File file, String location) throws IOException {
         File target = new File(location);
         target.getParentFile().mkdirs();
+        // COPY_ATTRIBUTES ?
         return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING).toFile();
     }
 

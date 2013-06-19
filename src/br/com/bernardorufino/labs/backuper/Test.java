@@ -1,6 +1,6 @@
 package br.com.bernardorufino.labs.backuper;
 
-import br.com.bernardorufino.labs.backuper.model.backup.BackupsManager;
+import br.com.bernardorufino.labs.backuper.controller.BackupsManager;
 import br.com.bernardorufino.labs.backuper.model.tree.FileNode;
 import br.com.bernardorufino.labs.backuper.model.tree.FolderNode;
 import br.com.bernardorufino.labs.backuper.model.tree.Node;
@@ -8,6 +8,8 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class Test {
 
@@ -16,11 +18,23 @@ public class Test {
     }
 
     public static void testBackup() throws IOException {
-        BackupsManager manager = new BackupsManager(new File("D:\\Backuper\\Backup"), new File("D:\\Backuper\\Client"));
+        File backupsFolder = new File("D:\\Backuper\\Backup");
+        List<File> clientFolders = Arrays.asList(
+            new File("D:\\Backuper\\ClientA"),
+            new File("D:\\Backuper\\ClientB"),
+            new File("D:\\Backuper\\sub\\ClientC")
+        );
+        BackupsManager manager = new BackupsManager();
+        manager.setBackupsFolder(backupsFolder);
+        manager.setClientFolders(clientFolders);
         manager.fetchBackups();
+        System.out.println(manager.hasBackups());
 //        manager.makeBackup();
-        manager.getBackups().get(1).restore();
-//        Utils.purge(new File("D:\\Backuper\\Client"));
+        String id = manager.getBackups().get(0).id;
+        manager.restore(id, Arrays.asList(
+            new File("D:\\Backuper\\ClientB"),
+            new File("D:\\Backuper\\sub\\ClientC")
+        ));
     }
 
     public static void testTree() {
