@@ -1,14 +1,12 @@
 package br.com.bernardorufino.labs.backuper.controller;
 
-import br.com.bernardorufino.labs.backuper.config.Definitions;
+import br.com.bernardorufino.labs.backuper.Application;
 import br.com.bernardorufino.labs.backuper.libs.Utils;
 import br.com.bernardorufino.labs.backuper.model.backup.Backup;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-
-import static br.com.bernardorufino.labs.backuper.config.Definitions.*;
 
 public class BackupsTransaction {
     private final BackupsManager manager;
@@ -40,17 +38,33 @@ public class BackupsTransaction {
 
     public Transaction restore(final String id, final List<File> clientFolders) {
         return new Transaction() {
-            private String safetyBackupID;
+            private Backup safetyBackup;
 
             public void commit() throws IOException {
+
+                Utils.uninterruptable();
                 manager.makeBackup();
-                safetyBackupID = manager.getRecent().id;
+                safetyBackup = manager.getRecent();
+                Utils.interruptable();
+
                 manager.restore(id, clientFolders);
+
+                Utils.uninterruptable();
+                manager.delete(safetyBackup.id);
+                manager.makeBackup();
+                Utils.interruptable();
+
             }
 
             public void rollback(Throwable e) throws Throwable {
-                if (safetyBackupID != null) {
-                    manager.restore(safetyBackupID, clientFolders);
+                // Check if the cause for stopping is the restore() and not the getRecent()
+                if (safetyBackup != null) {
+
+                    Utils.uninterruptable();
+                    manager.restore(safetyBackup.id, clientFolders);
+                    manager.delete(safetyBackup.id);
+                    Utils.interruptable();
+
                 }
             }
 

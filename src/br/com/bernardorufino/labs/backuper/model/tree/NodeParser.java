@@ -74,7 +74,7 @@ public class NodeParser {
         Node.Type type = Node.Type.valueOf(fromProperty(scan.next()));
         Node.Status status = Node.Status.valueOf(fromProperty(scan.next()));
         DateTime date = Definitions.DATE_FORMATTER.parseDateTime(fromProperty(scan.next()));
-        String name = scan.next();
+        String name = scan.nextLine().substring(Definitions.DELIMITER.length());
         result.node = Node.create(type, name, status, date, location);
         return result;
     }

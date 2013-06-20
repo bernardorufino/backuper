@@ -27,7 +27,6 @@ public class IncrementalBackup extends Backup {
 
     //TODO: Watch out for full snapshots only on base backup
     public Map<File, Node> getSnapshots(Collection<File> clientFolders) {
-        if (snapshots != null) return snapshots;
         snapshots = new HashMap<>();
         Map<File, Node> previousSnapshots = previous.getSnapshots(clientFolders);
         for (File folder : previousSnapshots.keySet()) {

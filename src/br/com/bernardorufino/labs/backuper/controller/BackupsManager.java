@@ -5,14 +5,19 @@ import br.com.bernardorufino.labs.backuper.model.backup.Backup;
 import br.com.bernardorufino.labs.backuper.model.backup.BackupParser;
 import br.com.bernardorufino.labs.backuper.model.backup.BaseBackup;
 import br.com.bernardorufino.labs.backuper.model.backup.IncrementalBackup;
+import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static br.com.bernardorufino.labs.backuper.config.Definitions.MAX_CLIENT_FOLDERS;
 import static br.com.bernardorufino.labs.backuper.config.Definitions.MODIFICATIONS_FILE_EXTENSION;
 
 public class BackupsManager {
+
+    public static class NotEnoughDiskSpaceException extends RuntimeException { /* Empty */ }
+    public static class ClientFoldersListFullException extends RuntimeException { /* Empty */ }
 
     private File backupsFolder;
     private List<File> clientFolders;
@@ -64,7 +69,12 @@ public class BackupsManager {
     }
 
     public void addClientFolder(File clientFolder) {
-        clientFolders.add(clientFolder);
+        if (clientFolders.size() >= MAX_CLIENT_FOLDERS) {
+            throw new ClientFoldersListFullException();
+        }
+        if (!clientFolders.contains(clientFolder)) {
+            clientFolders.add(clientFolder);
+        }
     }
 
     public void setClientFolders(List<File> clientFolders) {
@@ -77,6 +87,7 @@ public class BackupsManager {
     }
 
     public Backup makeBackup() throws IOException {
+        if (!hasEnoughSpaceForBackup()) throw new NotEnoughDiskSpaceException();
         if (history.size() > 0) {
             return add(new IncrementalBackup(getRecent()));
         } else {
@@ -84,14 +95,21 @@ public class BackupsManager {
         }
     }
 
+    public boolean hasEnoughSpaceForBackup() {
+        long spaceNeeded = 0;
+        for (File clientFolder : clientFolders) {
+            spaceNeeded += FileUtils.sizeOfDirectory(clientFolder);
+        }
+        long freeSpace = backupsFolder.getFreeSpace();
+        return freeSpace > spaceNeeded;
+    }
+
     public void restore(String id, Collection<File> clientFolders) throws IOException {
         history.get(id).restore(clientFolders);
-        makeBackup();
     }
 
     // Only delete the last one!
     public void delete(String id) throws IOException {
-        System.out.println(id);
         File lastBackupFolder = backupsFolder.toPath().resolve(id).toFile();
         Utils.purge(lastBackupFolder);
         File modificationsFile = backupsFolder.toPath().resolve(id + "." + MODIFICATIONS_FILE_EXTENSION).toFile();

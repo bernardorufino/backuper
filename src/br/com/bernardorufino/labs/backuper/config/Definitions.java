@@ -11,6 +11,8 @@ public class Definitions {
         throw new AssertionError("Cannot instantiate object from class " + this.getClass());
     }
 
+    public static final int MAX_CLIENT_FOLDERS = 32;
+
     public static final DateTimeFormatter DATE_FORMAT = DateTimeFormat.forPattern("yyyyMMddHHmmssS");
 
     public static final String BASE_BACKUP_HEAD = "BASE";

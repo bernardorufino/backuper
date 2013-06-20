@@ -15,12 +15,13 @@ public abstract class Transaction {
             commit();
             return true;
         } catch (Throwable commitException) {
-            System.out.println("caught commitException");
+//            System.out.println("caught commitException");
             try {
                 rollback(commitException);
                 return false;
             } catch (Throwable rollbackException) {
-                System.out.println("caught rollbackException");
+                rollbackException.printStackTrace();
+//                System.out.println("caught rollbackException");
                 RollbackException e = new RollbackException();
                 e.initCause(rollbackException);
                 throw e;

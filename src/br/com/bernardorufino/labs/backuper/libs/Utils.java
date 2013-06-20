@@ -66,11 +66,20 @@ public class Utils {
         return copy(file, location.toPath().resolve(file.getName()).toString());
     }
 
+    public static boolean interruptable = true;
+
+    public static void uninterruptable() { interruptable = false; }
+    public static void interruptable() { interruptable = true; }
+
     public static File copy(File file, String location) throws IOException {
         File target = new File(location);
         target.getParentFile().mkdirs();
         // COPY_ATTRIBUTES ?
-        return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING, ExtendedCopyOption.INTERRUPTIBLE).toFile();
+        if (interruptable) {
+            return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING, ExtendedCopyOption.INTERRUPTIBLE).toFile();
+        } else {
+            return Files.copy(file.toPath(), target.toPath(), REPLACE_EXISTING).toFile();
+        }
     }
 
     private static class Purger extends SimpleFileVisitor<Path> {

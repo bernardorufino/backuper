@@ -8,13 +8,21 @@ import org.joda.time.DateTime;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
 public class Test {
 
     public static void main(String[] args) throws IOException {
-        testBackup();
+        System.out.println(new File("D:\\Backuper\\ClientB").getTotalSpace());
+        System.out.println(new File("D:").getFreeSpace());
+    }
+
+    public static void testDeletion() throws IOException {
+
     }
 
     public static void testBackup() throws IOException {
